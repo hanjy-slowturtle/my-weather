@@ -3,6 +3,7 @@ import Loading from './Loading';
 import * as Location from 'expo-location';
 import { Alert, Platform } from 'react-native';
 import axios from 'axios';
+import Weather from './Weather';
 
 const API_KEY = '241051bf13976dd3ddf8b8d9f247255e';
 
@@ -12,9 +13,9 @@ export default class extends React.Component {
   };
 
   render() {
-    const { isLoading } = this.state;
+    const { isLoading, temp, condition } = this.state;
     return (
-      isLoading ? <Loading /> : null
+      isLoading ? <Loading /> : <Weather temp={Math.round(temp)} condition={condition} />
     );
   }
 
@@ -28,17 +29,24 @@ export default class extends React.Component {
       const { coords: { latitude, longitude} } = await Location.getCurrentPositionAsync();
       console.log(latitude, longitude);
       this.getWeather(latitude, longitude);
-      this.setState({ isLoading: false });
     } catch(error) {
       console.log(error);
       myAlert("Can't find you", 'So Sad');
     }
-  }
+  };
   getWeather = async (latitude, longitude) => {
-    const { data } = await axios.get(`http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&APPID=${API_KEY}`);
-    console.log(data);
-    return data;
-  }
+    const {
+      data: {
+        main: { temp },
+        weather
+      }
+    } = await axios.get(`http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&APPID=${API_KEY}&units=metric`);
+    this.setState({
+      isLoading: false,
+      temp,
+      condition: weather[0].main
+    });
+  };
 }
 
 function myAlert(title, message) {

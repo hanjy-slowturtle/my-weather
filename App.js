@@ -20,32 +20,36 @@ export default class extends React.Component {
   }
 
   componentDidMount() {
-    this.getLocation();
+    this.getWeather();
   }
 
-  getLocation = async () => {
+  getWeather = async () => {
     try {
-      await Location.requestPermissionsAsync();
-      const { coords: { latitude, longitude} } = await Location.getCurrentPositionAsync();
-      console.log(latitude, longitude);
-      this.getWeather(latitude, longitude);
+      const { latitude, longitude } = await this.getLocation();
+      const {
+        data: {
+          main: { temp },
+          weather
+        }
+      } = await axios.get(`http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&APPID=${API_KEY}&units=metric`);
+      this.setState({
+        isLoading: false,
+        temp,
+        condition: weather[0].main
+      });
     } catch(error) {
       console.log(error);
       myAlert("Can't find you", 'So Sad');
     }
   };
-  getWeather = async (latitude, longitude) => {
-    const {
-      data: {
-        main: { temp },
-        weather
-      }
-    } = await axios.get(`http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&APPID=${API_KEY}&units=metric`);
-    this.setState({
-      isLoading: false,
-      temp,
-      condition: weather[0].main
-    });
+  getLocation = async () => {
+    await Location.requestPermissionsAsync();
+    const { coords: { latitude, longitude} } = await Location.getCurrentPositionAsync();
+    console.log(latitude, longitude);
+    return {
+      latitude,
+      longitude
+    };
   };
 }
 
